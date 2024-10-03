@@ -1,0 +1,61 @@
+#include <EEPROM.h>
+
+#define EEPROM_SIZE 512    // Size of EEPROM
+#define RESET_PIN 2        // Define a GPIO pin for the reset button (GPIO 2 for this example)
+
+void setup() {
+  Serial.begin(115200);
+  EEPROM.begin(EEPROM_SIZE);
+  
+  // Set the reset pin as input with an internal pull-up resistor
+  pinMode(RESET_PIN, INPUT_PULLUP);
+  
+  // Check if the reset pin is pressed during boot
+  if (digitalRead(RESET_PIN) == LOW) {
+    Serial.println("Factory reset requested...");
+    factoryReset();       // Call the function to reset all stored data
+  } else {
+    // Load the settings from EEPROM
+    loadSettings();
+  }
+  
+  // Add any other setup code (e.g., Wi-Fi connection) here
+}
+
+void loop() {
+  // Your main code here
+}
+
+void loadSettings() {
+  // Read stored settings from EEPROM
+  String storedSSID = "";
+  for (int i = 0; i < 32; i++) {
+    storedSSID += char(EEPROM.read(i));
+  }
+
+  String storedPassword = "";
+  for (int i = 32; i < 64; i++) {
+    storedPassword += char(EEPROM.read(i));
+  }
+
+  Serial.println("Stored SSID: " + storedSSID);
+  Serial.println("Stored Password: " + storedPassword);
+  
+  // Add logic to connect to Wi-Fi or handle default settings
+}
+
+void factoryReset() {
+  // Clear the EEPROM by writing zeros to all positions
+  for (int i = 0; i < EEPROM_SIZE; i++) {
+    EEPROM.write(i, 0);
+  }
+  
+  EEPROM.commit();  // Save the changes to EEPROM
+  Serial.println("EEPROM cleared. Restarting device...");
+  
+  // Optional: Add a delay for the user to see the message
+  delay(3000);
+
+  // Restart the device to apply the reset
+  ESP.restart();
+}
